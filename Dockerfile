@@ -255,8 +255,7 @@ RUN \
     localedef -i $LOCALE -f UTF-8 $LOCALE.UTF-8; \
   done && \
   echo "**** theme ****" && \
-  curl -s https://raw.githubusercontent.com/thelamer/lang-stash/master/theme.tar.gz \
-    | tar xzvf - -C /usr/share/themes/Clearlooks/openbox-3/ && \
+  mkdir -p /usr/share/themes/Clearlooks && \
   echo "**** cleanup ****" && \
   apt-get purge -y --autoremove \
     python3-dev && \
