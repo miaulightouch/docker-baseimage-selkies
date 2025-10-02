@@ -39,7 +39,7 @@ All application settings are passed via environment variables:
 | DISABLE_IPV6 | If set to true or any value this will disable IPv6 |
 | LC_ALL | Set the Language for the container to run as IE `fr_FR.UTF-8` `ar_AE.UTF-8` |
 | NO_DECOR | If set the application will run without window borders for use as a PWA. (Decor can be enabled and disabled with Ctrl+Shift+d) |
-| NO_FULL | Do not autmatically fullscreen applications when using openbox. |
+| NO_FULL | Do not automatically fullscreen applications when using labwc. |
 | DISABLE_ZINK | Do not set the Zink environment variables if a video card is detected (userspace applications will use CPU rendering) |
 | WATERMARK_PNG | Full path inside the container to a watermark png IE `/usr/share/selkies/www/icon.png` |
 | WATERMARK_LOCATION | Where to paint the image over the stream integer options below |
@@ -220,7 +220,7 @@ A list of linuxserver.io supported applications is located [HERE](https://github
 
 ### Application containers
 
-Included in these base images is a simple [Openbox DE](http://openbox.org/) and the accompanying logic needed to launch a single application. Lets look at the bare minimum needed to create an application container starting with a Dockerfile:
+Included in these base images is a simple [labwc](https://github.com/labwc/labwc) Wayland compositor and the accompanying logic needed to launch a single application. Lets look at the bare minimum needed to create an application container starting with a Dockerfile:
 
 ```
 FROM ghcr.io/linuxserver/baseimage-selkies:alpine322
@@ -259,19 +259,9 @@ This similar setup can be used to embed any Linux Desktop application in a web a
 
 #### In container application launching
 
-Also included in the init logic is the ability to define application launchers. As the user has the ability to close the application or if they want to open multiple instances of it this can be useful. Here is an example of a menu definition file for Firefox:
+Also included in the init logic is the ability to define application launchers. As the user has the ability to close the application or if they want to open multiple instances of it this can be useful. With labwc, you can create a menu definition file compatible with the labwc menu format.
 
-```
-<?xml version="1.0" encoding="utf-8"?>
-<openbox_menu xmlns="http://openbox.org/3.4/menu">
-<menu id="root-menu" label="MENU">
-<item label="xterm" icon="/usr/share/pixmaps/xterm-color_48x48.xpm"><action name="Execute"><command>/usr/bin/xterm</command></action></item>
-<item label="FireFox" icon="/usr/share/icons/hicolor/48x48/apps/firefox.png"><action name="Execute"><command>/usr/bin/firefox</command></action></item>
-</menu>
-</openbox_menu>
-```
-
-Simply create this file and add it to your defaults folder as `menu.xml`:
+Simply create a menu file and add it to your defaults folder as `menu.xml`:
 
 ```
 ├── Dockerfile
@@ -281,12 +271,12 @@ Simply create this file and add it to your defaults folder as `menu.xml`:
     └── menu.xml
 ```
 
-This allows users to right click the desktop background to launch the application.
+This allows users to interact with the desktop environment to launch applications.
 
 
 ### Full Desktop environments
 
-When building an application container we are leveraging the Openbox DE to handle window management, but it is also possible to completely replace the DE that is launched on container init using the `startwm.sh` script, located again in defaults:
+When building an application container we are leveraging the labwc Wayland compositor to handle window management, but it is also possible to customize the environment that is launched on container init using the `startwm.sh` script, located again in defaults:
 
 ```
 ├── Dockerfile
@@ -295,7 +285,7 @@ When building an application container we are leveraging the Openbox DE to handl
     └── startwm.sh
 ```
 
-If included in the build logic it will be launched in place of Openbox. Examples for this kind of configuration can be found in our [Webtop repository](https://github.com/linuxserver/docker-webtop)
+If included in the build logic it will be launched to customize the Wayland session. Examples for this kind of configuration can be found in our [Webtop repository](https://github.com/linuxserver/docker-webtop)
 
 ## Docker in Docker (DinD)
 

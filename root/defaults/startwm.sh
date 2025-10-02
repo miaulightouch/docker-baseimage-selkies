@@ -7,5 +7,11 @@ if which nvidia-smi > /dev/null 2>&1 && ls -A /dev/dri 2>/dev/null && [ "${DISAB
   export GALLIUM_DRIVER=zink
 fi
 
-# Start DE
-exec dbus-launch --exit-with-session /usr/bin/openbox-session > /dev/null 2>&1
+# Set Wayland environment
+export XDG_RUNTIME_DIR=/tmp
+export WAYLAND_DISPLAY=wayland-0
+
+# Keep the session running
+while true; do
+  sleep infinity
+done

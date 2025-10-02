@@ -1,26 +1,20 @@
 #!/usr/bin/with-contenv bash
 
-# wait for X to be running
+# wait for Wayland to be running
+export XDG_RUNTIME_DIR=/tmp
+export WAYLAND_DISPLAY=wayland-0
 while true; do
-  if xset q &>/dev/null; then
+  if [ -e "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" ]; then
     break
   fi
   sleep .5
 done
 
-# set sane resolution before starting apps
-s6-setuidgid abc xrandr --newmode "1024x768" 63.50  1024 1072 1176 1328  768 771 775 798 -hsync +vsync
-s6-setuidgid abc xrandr --addmode screen "1024x768"
-s6-setuidgid abc xrandr --output screen --mode "1024x768" --dpi 96
+# set cursor theme for Wayland
+mkdir -p "${HOME}/.config"
+echo "XCURSOR_THEME=breeze" > "${HOME}/.config/wayland-cursor"
 
-# set xresources
-if [ -f "${HOME}/.Xresources" ]; then
-  xrdb "${HOME}/.Xresources"
-else
-  echo "Xcursor.theme: breeze" > "${HOME}/.Xresources"
-  xrdb "${HOME}/.Xresources"
-fi
-chown abc:abc "${HOME}/.Xresources"
+chown -R abc:abc "${HOME}/.config"
 chmod 777 /tmp/selkies*
 
 # run

@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1
-FROM lscr.io/linuxserver/xvfb:debianbookworm AS xvfb
 FROM ghcr.io/linuxserver/baseimage-alpine:3.22 AS frontend
 
 RUN \
@@ -45,7 +44,8 @@ LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DA
 LABEL maintainer="thelamer"
 
 # env
-ENV DISPLAY=:1 \
+ENV WAYLAND_DISPLAY=wayland-0 \
+    XDG_RUNTIME_DIR=/tmp \
     PERL5LIB=/usr/local/bin \
     HOME=/config \
     START_DOCKER=true \
@@ -72,10 +72,10 @@ RUN \
   DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
     breeze-cursor-theme \
     ca-certificates \
+    cairo-5c \
     cmake \
     console-data \
     containerd.io \
-    dbus-x11 \
     docker-buildx-plugin \
     docker-ce \
     docker-ce-cli \
@@ -95,55 +95,68 @@ RUN \
     kbd \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
+    libcairo2 \
+    libcairo2-dev \
     libev4 \
-    libfontenc1 \
-    libfreetype6 \
     libgbm1 \
     libgcrypt20 \
     libgirepository-1.0-1 \
     libgl1-mesa-dri \
+    libglib2.0-0 \
+    libglib2.0-dev \
     libglu1-mesa \
     libgnutls30 \
     libgtk-3.0 \
+    libinput10 \
+    libinput-dev \
     libnginx-mod-http-fancyindex \
     libnotify-bin \
     libnss3 \
     libopus0 \
     libp11-kit0 \
     libpam0g \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libpng16-16 \
+    libpng-dev \
+    librsvg2-2 \
+    librsvg2-dev \
     libtasn1-6 \
     libvulkan1 \
+    libwayland-client0 \
+    libwayland-cursor0 \
+    libwayland-dev \
+    libwayland-egl1 \
+    libwayland-server0 \
     libx11-6 \
-    libxau6 \
+    libx11-xcb1 \
     libxcb1 \
+    libxcb-composite0 \
     libxcb-icccm4 \
     libxcb-image0 \
-    libxcb-keysyms1 \
-    libxcb-render-util0 \
-    libxcursor1 \
-    libxdmcp6 \
-    libxext6 \
-    libxfconf-0-3 \
-    libxfixes3 \
-    libxfont2 \
-    libxinerama1 \
-    libxkbcommon-x11-0 \
-    libxshmfence1 \
-    libxtst6 \
+    libxcb-render0 \
+    libxcb-xfixes0 \
+    libxkbcommon0 \
+    libxkbcommon-dev \
+    libxml2 \
+    libxml2-dev \
     locales-all \
     make \
+    meson \
     mesa-va-drivers \
     mesa-vulkan-drivers \
+    ninja-build \
     nginx \
-    openbox \
     openssh-client \
     openssl \
     pciutils \
+    pkg-config \
     procps \
     pulseaudio \
     pulseaudio-utils \
     python3 \
     python3-venv \
+    seatd \
     software-properties-common \
     ssl-cert \
     stterm \
@@ -151,31 +164,11 @@ RUN \
     tar \
     util-linux \
     vulkan-tools \
-    x11-apps \
-    x11-common \
-    x11-utils \
-    x11-xkb-utils \
-    x11-xserver-utils \
-    xauth \
-    xclip \
-    xcvt \
+    wayland-protocols \
+    weston \
     xdg-utils \
-    xdotool \
-    xfconf \
-    xfonts-base \
     xkb-data \
-    xsel \
-    xserver-common \
-    xserver-xorg-core \
-    xserver-xorg-video-amdgpu \
-    xserver-xorg-video-ati \
-    xserver-xorg-video-intel \
-    xserver-xorg-video-nouveau \
-    xserver-xorg-video-qxl \
-    xsettingsd \
-    xterm \
-    xutils \
-    xvfb \
+    xwayland \
     zlib1g && \
   apt install -t bookworm-backports -y \
     mesa-libgallium && \
@@ -218,14 +211,21 @@ RUN \
   curl -o \
     /usr/share/selkies/www/favicon.ico \
     https://raw.githubusercontent.com/linuxserver/docker-templates/refs/heads/master/linuxserver.io/img/selkies-icon.ico && \
-  echo "**** openbox tweaks ****" && \
-  sed -i \
-    -e 's/NLIMC/NLMC/g' \
-    -e '/debian-menu/d' \
-    -e 's|</applications>|  <application class="*"><maximized>yes</maximized></application>\n</applications>|' \
-    -e 's|</keyboard>|  <keybind key="C-S-d"><action name="ToggleDecorations"/></keybind>\n</keyboard>|' \
-    -e 's|<number>4</number>|<number>1</number>|' \
-    /etc/xdg/openbox/rc.xml && \
+  echo "**** build and install labwc ****" && \
+  cd /tmp && \
+  git clone https://github.com/labwc/labwc.git && \
+  cd labwc && \
+  git checkout 0.9.1 && \
+  meson setup build/ && \
+  ninja -C build/ && \
+  ninja -C build/ install && \
+  echo "**** configure labwc ****" && \
+  mkdir -p /etc/xdg/labwc && \
+  echo '<?xml version="1.0"?>' > /etc/xdg/labwc/rc.xml && \
+  echo '<labwc_config>' >> /etc/xdg/labwc/rc.xml && \
+  echo '  <core><decoration>server</decoration></core>' >> /etc/xdg/labwc/rc.xml && \
+  echo '  <theme><name>Clearlooks</name></theme>' >> /etc/xdg/labwc/rc.xml && \
+  echo '</labwc_config>' >> /etc/xdg/labwc/rc.xml && \
   echo "**** user perms ****" && \
   sed -e 's/%sudo	ALL=(ALL:ALL) ALL/%sudo ALL=(ALL:ALL) NOPASSWD: ALL/g' \
     -i /etc/sudoers && \
@@ -255,8 +255,7 @@ RUN \
     localedef -i $LOCALE -f UTF-8 $LOCALE.UTF-8; \
   done && \
   echo "**** theme ****" && \
-  curl -s https://raw.githubusercontent.com/thelamer/lang-stash/master/theme.tar.gz \
-    | tar xzvf - -C /usr/share/themes/Clearlooks/openbox-3/ && \
+  mkdir -p /usr/share/themes/Clearlooks && \
   echo "**** cleanup ****" && \
   apt-get purge -y --autoremove \
     python3-dev && \
@@ -271,7 +270,6 @@ RUN \
 # add local files
 COPY /root /
 COPY --from=frontend /buildout /usr/share/selkies/www
-COPY --from=xvfb / /
 
 # ports and volumes
 EXPOSE 3000 3001
