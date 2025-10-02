@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bash
+
+# Set up XDG_RUNTIME_DIR for Wayland
+export XDG_RUNTIME_DIR=/tmp
+mkdir -p "${XDG_RUNTIME_DIR}"
+chmod 700 "${XDG_RUNTIME_DIR}"
+chown abc:abc "${XDG_RUNTIME_DIR}"
+
+# Set Wayland display
+export WAYLAND_DISPLAY=wayland-0
+
+# Enable DRI support if detected
+if [ -e "/dev/dri/renderD128" ]; then
+  export WLR_DRM_DEVICE=/dev/dri/renderD128
+fi
+if [ ! -z ${DRINODE+x} ]; then
+  export WLR_DRM_DEVICE="${DRINODE}"
+fi
+
+# Run labwc Wayland compositor
+exec s6-setuidgid abc \
+  /usr/local/bin/labwc
